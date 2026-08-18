@@ -8,23 +8,23 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [FormsModule, RouterLink],
   template: `
-    <div class="login-wrapper">
-      <div class="login-card">
-        <div class="card-header">
-          <a routerLink="/" class="back-link">← Back to Home</a>
-          <h2>Sign In</h2>
-          <p>Access your Admin Dashboard</p>
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 font-sans">
+      <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-slate-100">
+        <div class="mb-6">
+          <a routerLink="/" class="text-xs text-slate-500 hover:text-blue-600 transition inline-block mb-3">← Back to Home</a>
+          <h2 class="text-2xl font-bold text-slate-900">Sign In</h2>
+          <p class="text-sm text-slate-500">Access your Admin Dashboard</p>
         </div>
 
         @if (errorMessage()) {
-          <div class="alert alert-error">
+          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-5">
             {{ errorMessage() }}
           </div>
         }
 
-        <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-          <div class="form-group">
-            <label for="email">Email Address</label>
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="space-y-4">
+          <div>
+            <label for="email" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
             <input
               type="email"
               id="email"
@@ -33,11 +33,12 @@ import { AuthService } from '../../core/services/auth.service';
               required
               email
               placeholder="admin@example.com"
+              class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             />
           </div>
 
-          <div class="form-group">
-            <label for="password">Password</label>
+          <div>
+            <label for="password" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Password</label>
             <input
               type="password"
               id="password"
@@ -45,10 +46,15 @@ import { AuthService } from '../../core/services/auth.service';
               [(ngModel)]="password"
               required
               placeholder="••••••••"
+              class="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             />
           </div>
 
-          <button type="submit" class="btn btn-submit" [disabled]="authService.authLoading()">
+          <button
+            type="submit"
+            [disabled]="authService.authLoading()"
+            class="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-70 text-white font-semibold rounded-lg text-sm transition shadow-md"
+          >
             @if (authService.authLoading()) {
               <span>Signing in...</span>
             } @else {
@@ -58,122 +64,22 @@ import { AuthService } from '../../core/services/auth.service';
         </form>
 
         <!-- Quick Demo Login helper button -->
-        <div class="demo-box">
-          <p><strong>Demo Admin Credentials</strong> (Auto-Seeded)</p>
-          <div class="credentials-info">
-            <code>admin&#64;example.com</code> / <code>Admin123!</code>
+        <div class="mt-8 pt-6 border-t border-dashed border-slate-200 text-center">
+          <p class="text-xs font-medium text-slate-600 mb-1">Demo Admin Credentials (Auto-Seeded)</p>
+          <div class="text-xs text-slate-500 mb-3">
+            <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono">admin&#64;example.com</code> / <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono">Admin123!</code>
           </div>
-          <button type="button" class="btn btn-demo" (click)="fillAdminCredentials()">
+          <button
+            type="button"
+            (click)="fillAdminCredentials()"
+            class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-3 py-2 rounded-md border border-slate-200 transition"
+          >
             ⚡ Quick Fill Admin Credentials
           </button>
         </div>
       </div>
     </div>
   `,
-  styles: [`
-    .login-wrapper {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      padding: 1.5rem;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .login-card {
-      background: white;
-      border-radius: 16px;
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-    }
-    .card-header {
-      margin-bottom: 1.5rem;
-    }
-    .back-link {
-      font-size: 0.85rem;
-      color: #64748b;
-      text-decoration: none;
-      display: inline-block;
-      margin-bottom: 1rem;
-    }
-    .back-link:hover { color: #2563eb; }
-    .card-header h2 { font-size: 1.75rem; color: #0f172a; margin-bottom: 0.25rem; }
-    .card-header p { color: #64748b; font-size: 0.95rem; }
-
-    .alert {
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      margin-bottom: 1.25rem;
-    }
-    .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-
-    .form-group {
-      margin-bottom: 1.25rem;
-      text-align: left;
-    }
-    .form-group label {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #334155;
-      margin-bottom: 0.4rem;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 0.75rem 0.9rem;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      box-sizing: border-box;
-      transition: border-color 0.2s;
-    }
-    .form-group input:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    }
-
-    .btn-submit {
-      width: 100%;
-      padding: 0.85rem;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-submit:hover:not(:disabled) { background: #1d4ed8; }
-    .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
-
-    .demo-box {
-      margin-top: 2rem;
-      padding-top: 1.5rem;
-      border-top: 1px dashed #e2e8f0;
-      text-align: center;
-    }
-    .demo-box p { font-size: 0.85rem; color: #475569; margin-bottom: 0.5rem; }
-    .credentials-info { font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem; }
-    .credentials-info code { background: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px; color: #0f172a; }
-
-    .btn-demo {
-      background: #f1f5f9;
-      color: #0f172a;
-      border: 1px solid #cbd5e1;
-      padding: 0.5rem 0.9rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-demo:hover { background: #e2e8f0; }
-  `],
 })
 export class LoginComponent {
   authService = inject(AuthService);

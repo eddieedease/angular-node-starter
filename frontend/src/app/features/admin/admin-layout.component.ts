@@ -7,202 +7,72 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [RouterOutlet, RouterLink],
   template: `
-    <div class="admin-shell">
+    <div class="flex min-h-screen bg-slate-50 font-sans">
       <!-- Sidebar -->
-      <aside class="sidebar">
-        <div class="sidebar-header">
-          <div class="logo">
-            <span class="badge">Admin</span>
-            <strong>Starter</strong>
+      <aside class="w-64 bg-slate-900 text-white flex flex-col border-r border-slate-800">
+        <div class="p-6 border-b border-slate-800">
+          <div class="flex items-center gap-2 text-lg font-bold">
+            <span class="bg-blue-600 text-white text-xs font-semibold px-2 py-0.5 rounded">Admin</span>
+            <span>Starter</span>
           </div>
         </div>
 
-        <nav class="sidebar-nav">
-          <a routerLink="/admin/dashboard" class="nav-item active">
-            <span class="icon">📊</span>
+        <nav class="p-4 flex-1 space-y-1">
+          <a routerLink="/admin/dashboard" class="flex items-center gap-3 px-4 py-2.5 text-white bg-slate-800 rounded-lg font-medium text-sm transition">
+            <span class="text-base">📊</span>
             <span>Dashboard</span>
           </a>
-          <a routerLink="/" class="nav-item">
-            <span class="icon">🌐</span>
+          <a routerLink="/" class="flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg font-medium text-sm transition">
+            <span class="text-base">🌐</span>
             <span>Public Site</span>
           </a>
-          <a href="http://localhost:8080" target="_blank" rel="noopener" class="nav-item">
-            <span class="icon">🗄️</span>
+          <a href="http://localhost:8080" target="_blank" rel="noopener" class="flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg font-medium text-sm transition">
+            <span class="text-base">🗄️</span>
             <span>phpMyAdmin ↗</span>
           </a>
         </nav>
 
-        <div class="sidebar-footer">
-          <div class="user-info">
-            <div class="avatar">{{ userInitial() }}</div>
-            <div class="details">
-              <strong class="user-name">{{ authService.currentUser()?.name }}</strong>
-              <span class="user-email">{{ authService.currentUser()?.email }}</span>
+        <div class="p-4 border-t border-slate-800">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+              {{ userInitial() }}
+            </div>
+            <div class="overflow-hidden">
+              <strong class="block text-sm text-white truncate">{{ authService.currentUser()?.name }}</strong>
+              <span class="block text-xs text-slate-400 truncate">{{ authService.currentUser()?.email }}</span>
             </div>
           </div>
-          <button class="btn-logout" (click)="authService.logout()">
+          <button
+            (click)="authService.logout()"
+            class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-red-400 border border-slate-700 rounded-lg text-xs font-semibold transition"
+          >
             🚪 Logout
           </button>
         </div>
       </aside>
 
       <!-- Main Content Area -->
-      <main class="main-content">
+      <main class="flex-1 flex flex-col overflow-x-hidden">
         <!-- Top Bar Header -->
-        <header class="topbar">
-          <div class="topbar-title">
-            <h1>Admin Control Panel</h1>
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+          <div>
+            <h1 class="text-lg font-bold text-slate-900">Admin Control Panel</h1>
           </div>
-          <div class="topbar-actions">
-            <span class="status-indicator">
-              <span class="pulse-dot"></span>
+          <div>
+            <span class="inline-flex items-center gap-2 text-xs font-semibold text-green-800 bg-green-100 px-3 py-1 rounded-full">
+              <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
               API Backend: Online
             </span>
           </div>
         </header>
 
         <!-- Page Body -->
-        <div class="content-body">
+        <div class="p-8 flex-1">
           <router-outlet></router-outlet>
         </div>
       </main>
     </div>
   `,
-  styles: [`
-    .admin-shell {
-      display: flex;
-      min-height: 100vh;
-      background: #f8fafc;
-      font-family: system-ui, -apple-system, sans-serif;
-    }
-    .sidebar {
-      width: 260px;
-      background: #0f172a;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid #1e293b;
-    }
-    .sidebar-header {
-      padding: 1.5rem;
-      border-bottom: 1px solid #1e293b;
-    }
-    .logo {
-      font-size: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .badge {
-      background: #2563eb;
-      color: white;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 0.15rem 0.4rem;
-      border-radius: 4px;
-    }
-    .sidebar-nav {
-      padding: 1.5rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      flex: 1;
-    }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      color: #94a3b8;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    .nav-item:hover, .nav-item.active {
-      color: white;
-      background: #1e293b;
-    }
-    .sidebar-footer {
-      padding: 1.25rem;
-      border-top: 1px solid #1e293b;
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-    .avatar {
-      width: 36px;
-      height: 36px;
-      background: #2563eb;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-    }
-    .details {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .user-name { font-size: 0.9rem; color: white; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
-    .user-email { font-size: 0.75rem; color: #64748b; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
-
-    .btn-logout {
-      width: 100%;
-      padding: 0.6rem;
-      background: #1e293b;
-      color: #ef4444;
-      border: 1px solid #334155;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-logout:hover { background: #334155; }
-
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-    }
-    .topbar {
-      height: 64px;
-      background: white;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-    }
-    .topbar-title h1 { font-size: 1.25rem; color: #0f172a; font-weight: 700; margin: 0; }
-    .status-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.85rem;
-      color: #166534;
-      background: #dcfce7;
-      padding: 0.4rem 0.8rem;
-      border-radius: 9999px;
-      font-weight: 600;
-    }
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
-      background: #22c55e;
-      border-radius: 50%;
-      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.4);
-    }
-    .content-body {
-      padding: 2rem;
-      flex: 1;
-    }
-  `],
 })
 export class AdminLayoutComponent {
   authService = inject(AuthService);
