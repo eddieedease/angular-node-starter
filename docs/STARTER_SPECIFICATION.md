@@ -1,16 +1,16 @@
 # Angular + Node.js + MySQL Starter Template Specification
 
-> **Purpose:** Use this document as the prompt/specification in your next coding session to generate the complete starter template.
+> **Purpose:** Detailed architectural specification for the Angular 21 (Zoneless + Signals + Tailwind CSS), Express TypeScript, and MySQL 8 full-stack starter template.
 
 ---
 
 ## 1. Project Overview & Architecture
 
 We are building a production-ready **Full-Stack Starter Template** consisting of:
-- **Frontend:** Modern Angular (Latest version) using cutting-edge features.
+- **Frontend:** Modern Angular 21 with Tailwind CSS, Zoneless change detection, and Angular Signals.
 - **Backend:** Node.js (TypeScript + Express) with JWT Authentication.
 - **Database:** MySQL 8.
-- **Development Setup:** Local Angular CLI (`ng serve`) with proxying to a local Dockerized backend & database for maximum speed and hot-reloading.
+- **Development Setup:** Local Angular CLI (`ng serve`) with proxying (`proxy.conf.json`) to local Dockerized backend & database for maximum speed and hot-reloading.
 
 ```
 +------------------------------------------------------------------------+
@@ -34,9 +34,10 @@ We are building a production-ready **Full-Stack Starter Template** consisting of
 
 ## 2. Technical Requirements
 
-### Frontend (Angular)
-- **Version:** Latest Angular version.
-- **State & Change Detection:** **Zoneless** enabled (`provideZonelessChangeDetection()`), using **Angular Signals** (`signal()`, `computed()`, `effect()`) for reactive state.
+### Frontend (Angular 21 + Tailwind CSS)
+- **Version:** Angular 21.
+- **Styling:** **Tailwind CSS v4** (`@use "tailwindcss";` in `styles.scss` with `@tailwindcss/postcss`).
+- **State & Change Detection:** **Zoneless** enabled (`provideZonelessChangeDetection()`), using **Angular Signals** (`signal()`, `computed()`) for reactive state.
 - **Syntax:** Built-in Control Flow (`@if`, `@for`, `@switch`) and `@defer` blocks.
 - **Architecture:** 
   - 100% **Standalone Components** (no `NgModules`).
@@ -44,17 +45,17 @@ We are building a production-ready **Full-Stack Starter Template** consisting of
   - Dependency Injection using the `inject()` function.
 
 ### Backend (Node.js & MySQL)
-- **Runtime:** Node.js with **TypeScript**.
-- **Framework:** Express.js (or Fastify).
+- **Runtime:** Node.js 22 with **TypeScript**.
+- **Framework:** Express.js.
 - **Database:** MySQL 8.
-- **ORM / Query Builder:** `Kysely`, `Prisma`, or `TypeORM` / `mysql2` with prepared statements.
-- **Security:** JWT (JSON Web Tokens) in HTTP-only cookies or Bearer headers, `bcrypt` for password hashing, CORS configuration, and input validation (Zod/Joi).
+- **Query Builder / Connection:** `mysql2/promise` connection pool with auto-reconnect retry logic.
+- **Security:** JWT (JSON Web Tokens) in HTTP-only cookies or Bearer headers, `bcryptjs` for password hashing, CORS configuration, and Zod schema validation.
 
 ### Local Docker Environment
 - **`docker-compose.yml`** containing:
-  1. `backend`: Node.js container in watch mode (`tsc --watch` or `tsx`).
-  2. `db`: MySQL 8 container with persistent volume.
-  3. `phpmyadmin`: Container accessible on `http://localhost:8080` for easy database management.
+  1. `backend`: Node.js container running `tsx watch` on port `3000`.
+  2. `db`: MySQL 8 container with persistent volume `mysql_data` on port `3306`.
+  3. `phpmyadmin`: GUI container on port `8080`.
 - **Angular Proxy (`proxy.conf.json`):** Routes all `/api/*` calls from `localhost:4200` to `http://localhost:3000`.
 
 ---
@@ -63,20 +64,21 @@ We are building a production-ready **Full-Stack Starter Template** consisting of
 
 ### A. Landing Page (Public)
 - Clean, responsive Landing Page accessible at `/`.
-- Includes Header navigation (Home, About, Features, Login button), Hero section, and Footer.
+- Includes Header navigation, Hero section, Feature grid, Tech stack cards, Architecture diagram, and Footer.
 
 ### B. Authentication System
 - Login page at `/login`.
 - JWT-based authentication flow (Login POST endpoint -> Return token -> Store token/session).
+- Quick-fill button for default seeded admin credentials.
 - Auto-redirect to `/admin/dashboard` upon successful login.
-- **Database Seed:** Automatic seed script on startup that creates a default Admin user:
+- **Database Seed:** Automatic seed script on startup that creates default Admin user:
   - **Email:** `admin@example.com`
   - **Password:** `Admin123!`
 
 ### C. Admin Dashboard (Protected)
 - Accessible at `/admin` (Protected by `authGuard`).
-- Layout with Sidebar, Top Navigation, User profile menu, and Logout button.
-- Overview page displaying simulated statistics (e.g., total users, system status) fetched from the Node.js `/api/admin/stats` endpoint.
+- Layout with Sidebar, Topbar, User profile avatar, and Logout button.
+- Real-time telemetry page displaying live statistics (total users, system status, uptime, RAM) fetched from `/api/admin/stats`.
 
 ---
 
@@ -86,12 +88,15 @@ We are building a production-ready **Full-Stack Starter Template** consisting of
 angular-node-starter/
 ├── docker-compose.yml
 ├── README.md
+├── docs/
+│   ├── STARTER_SPECIFICATION.md
+│   └── DEPLOYMENT_GUIDE.md
 ├── backend/
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── src/
-│       ├── config/          # DB connection & env setup
+│       ├── config/          # DB connection & retry setup
 │       ├── controllers/     # Auth & Admin controllers
 │       ├── middleware/      # Auth guard & error handling
 │       ├── routes/          # Express route definitions
@@ -101,17 +106,17 @@ angular-node-starter/
     ├── angular.json
     ├── package.json
     ├── proxy.conf.json      # Angular dev proxy to localhost:3000
+    ├── .postcssrc.json      # Tailwind PostCSS configuration
     └── src/
-        ├── app/
-        │   ├── core/        # Auth service, interceptor, guards
-        │   ├── features/
-        │   │   ├── landing/ # Public landing page component
-        │   │   ├── auth/    # Login page component
-        │   │   └── admin/   # Admin dashboard & layout
-        │   ├── app.config.ts# Zoneless & HTTP client setup
-        │   ├── app.routes.ts# Application routes
-        │   └── app.component.ts
-        └── main.ts
+        ├── styles.scss      # Tailwind CSS import
+        └── app/
+            ├── core/        # Auth service, interceptor, guards
+            ├── features/
+            │   ├── landing/ # Public landing page component
+            │   ├── auth/    # Login page component
+            │   └── admin/   # Admin dashboard & layout
+            ├── app.config.ts# Zoneless & HTTP client setup
+            └── app.routes.ts# Application routes
 ```
 
 ---
@@ -122,10 +127,10 @@ angular-node-starter/
 # 1. Start Docker Containers (Backend + MySQL + phpMyAdmin)
 docker compose up -d
 
-# 2. Start Angular Frontend locally (with Hot Reloading)
+# 2. Start Angular Frontend locally (with Hot Reloading & Tailwind CSS)
 cd frontend
 npm install
-ng serve --proxy-config proxy.conf.json
+npm start
 
 # 3. Access in Browser
 # - Frontend: http://localhost:4200
