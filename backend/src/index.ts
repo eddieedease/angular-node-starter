@@ -13,7 +13,7 @@ import healthRoutes from './routes/health.routes.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Dynamic CORS configuration allowing local dev and production domain
 const allowedOrigins = [
@@ -54,8 +54,9 @@ async function startServer() {
     await checkDbConnection();
     await initDatabaseAndSeed();
 
-    app.listen(PORT, () => {
-      console.log(`[Server] Express server running on http://localhost:${PORT}`);
+    // Bind explicitly to 0.0.0.0 so Docker / Traefik reverse proxy can connect
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`[Server] Express server running on http://0.0.0.0:${PORT}`);
     });
   } catch (err) {
     console.error('[Server] Failed to start server:', err);
