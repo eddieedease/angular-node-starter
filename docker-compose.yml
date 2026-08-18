@@ -1,0 +1,55 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: starter-mysql
+    restart: always
+    command: --innodb-buffer-pool-size=64M --performance-schema=OFF
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: starter_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: starter-phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: secret
+    depends_on:
+      - db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: starter-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: secret
+      DB_NAME: starter_db
+      JWT_SECRET: super-secret-jwt-key
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
