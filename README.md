@@ -1,24 +1,26 @@
 # Angular + Node.js + MySQL Starter Template
 
-A modern, production-ready full-stack template featuring **Angular 21** (Zoneless + Signals), **Node.js (TypeScript + Express)**, **MySQL 8**, and **Docker Compose**.
+A modern, production-ready full-stack template featuring **Angular 21** (Zoneless + Signals + Tailwind CSS), **Node.js (TypeScript + Express)**, **MySQL 8**, and **Docker Compose**.
 
 ## Features
 
-- **Frontend (Angular 21)**
+- **Frontend (Angular 21 + Tailwind CSS v4)**
+  - Integrated Tailwind CSS styling system (`@use "tailwindcss";`)
   - Standalone Components & Built-in Control Flow (`@if`, `@for`, `@switch`)
   - Zoneless Change Detection (`provideZonelessChangeDetection()`)
   - Reactive state management with Angular **Signals** (`signal()`, `computed()`)
   - Functional Router Guards (`authGuard`) & HTTP Interceptors (`authInterceptor`)
-  - Angular Dev Proxy setup (`proxy.conf.json`)
+  - Multi-stage Dockerfile with Nginx SPA fallback routing & DNS proxying
 
 - **Backend (Node.js + Express + TypeScript)**
+  - Express API with explicit `0.0.0.0` host binding for Docker/Traefik reverse proxies
   - JWT Authentication with bcrypt password hashing
   - Auto-seeding database schema and initial admin account on container boot
   - Input validation with Zod
   - MySQL connection pool via `mysql2/promise` with auto-reconnect retry logic
   - Clean modular architecture (Controllers, Middleware, Routes, Seeders)
 
-- **Database & Management**
+- **Database & Local GUI**
   - **MySQL 8.0** with persistent storage volume
   - **phpMyAdmin** dashboard running on `http://localhost:8080`
 
@@ -35,7 +37,7 @@ docker compose up -d --build
 - **Backend API:** `http://localhost:3000/api`
 - **phpMyAdmin:** `http://localhost:8080` (Server: `db`, Username: `root`, Password: `secret`)
 
-### 2. Start Angular Frontend
+### 2. Start Angular Frontend (with Hot Reloading)
 
 ```bash
 cd frontend
@@ -56,46 +58,9 @@ Upon initial backend startup, the database is seeded automatically with:
 
 ---
 
-## Environment Variables
+## Production Deployment & Documentation
 
-### Backend (`backend/.env`)
-```env
-PORT=3000
-DB_HOST=db # Use 'localhost' when running Node outside Docker
-DB_USER=root
-DB_PASSWORD=secret
-DB_NAME=starter_db
-JWT_SECRET=super-secret-jwt-key
-```
+For complete production deployment instructions using VPS (Hetzner, Contabo, DigitalOcean), Antagonist DNS, and Coolify, see:
 
----
-
-## Repository Structure
-
-```
-angular-node-starter/
-├── docker-compose.yml
-├── README.md
-├── docs/
-│   ├── STARTER_SPECIFICATION.md
-│   └── DEPLOYMENT_GUIDE.md
-├── backend/
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── src/
-│       ├── config/
-│       ├── controllers/
-│       ├── middleware/
-│       ├── routes/
-│       ├── seeders/
-│       └── index.ts
-└── frontend/
-    ├── angular.json
-    ├── package.json
-    ├── proxy.conf.json
-    └── src/
-        └── app/
-            ├── core/
-            └── features/
-```
+📖 **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)**
+📋 **[Starter Specification](docs/STARTER_SPECIFICATION.md)**

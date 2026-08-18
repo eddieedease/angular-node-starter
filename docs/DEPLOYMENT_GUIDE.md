@@ -1,6 +1,16 @@
 # Complete Deployment Guide: GitHub, VPS & Coolify
 
-> **Purpose:** Step-by-step instructions to set up GitHub version control, provision a VPS (Hetzner, Contabo, or DigitalOcean), configure Antagonist DNS, install Coolify, and configure automatic Git-push deployments.
+> **Purpose:** Step-by-step instructions to set up GitHub version control, provision a VPS (Hetzner, Contabo, or DigitalOcean), configure Antagonist DNS, install Coolify, and configure automatic Git-push deployments without encountering memory, networking, or proxy errors.
+
+---
+
+## Key Troubleshooting & Lessons Learned (Read First!)
+
+> [!IMPORTANT]
+> 1. **VPS Swap File is Mandatory for MySQL 8**: On 2GB/4GB servers, MySQL 8 and Docker compilation spike memory usage. Always create a **4GB Swap File** immediately after server creation to prevent Out-Of-Memory container crashes (exit code 137).
+> 2. **Express Host Binding (`0.0.0.0`)**: In Node.js Express, `app.listen(PORT, '0.0.0.0')` must explicitly bind to `0.0.0.0`. If bound to default `localhost`, Traefik reverse proxy receives connection refused (`502 Bad Gateway`).
+> 3. **Coolify Internal Database Hostname**: Copy the exact internal container hostname from the **MySQL URL (internal)** field in Coolify (e.g. `mysql://user:pass@CONTAINER_NAME:3306/db`). Do not prepend `mysql-database-` if the internal hostname is just the container UUID.
+> 4. **Frontend Nginx Proxying & DNS Resolver**: In `frontend/nginx.conf`, include `resolver 1.1.1.1 8.8.8.8 valid=30s;` and proxy `/api/` calls to `https://api.yourdomain.nl/api/`. This avoids 405 Method Not Allowed and CORS issues.
 
 ---
 
@@ -11,8 +21,7 @@
 2. Click **+** (top right) -> **New repository**.
 3. Set **Repository name**: `angular-node-starter`.
 4. Select **Private** (recommended).
-5. Leave "Add a README file" unchecked.
-6. Click **Create repository**.
+5. Click **Create repository**.
 
 ### 1.2 Push Local Code to GitHub
 Open your terminal in your project root directory (`angular-node-starter/`) and run:
@@ -28,93 +37,101 @@ git push -u origin main
 
 ---
 
-## Step 2: Ordering VPS & Antagonist DNS Setup
+## Step 2: VPS Provisioning & Swap Setup
 
 ### 2.1 Order a VPS Server
 1. Sign up on **Hetzner Cloud**, **Contabo**, or **DigitalOcean**.
-2. Select an OS Image: **Ubuntu 24.04 LTS**.
+2. Select OS Image: **Ubuntu 24.04 LTS**.
 3. Select server plan: **2 GB to 6 GB RAM** (e.g. Hetzner `CAX11` / `CX22`, or Contabo `Cloud VPS 1`).
 4. Add your SSH Key and click **Create**.
 
-### 2.2 Configure DNS on Antagonist.nl
+### 2.2 Add 4GB Swap File (Mandatory)
+Connect to your VPS via SSH and run this 1-line command to configure swap memory:
+
+```bash
+ssh root@YOUR_SERVER_IP
+fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+```
+
+---
+
+## Step 3: Antagonist.nl DNS Setup
+
 1. Log in to **Mijn Antagonist**.
 2. Go to **Domeinnamen** -> Select your domain (e.g. `easetest.nl`) -> **DNS-beheer**.
 3. Add/Update these **A Records**:
-   - **Host:** `@` | **Type:** `A` | **Value:** `YOUR_SERVER_IP`
-   - **Host:** `www` | **Type:** `A` | **Value:** `YOUR_SERVER_IP`
-   - **Host:** `api` | **Type:** `A` | **Value:** `YOUR_SERVER_IP`
+
+| Host / Naam | Type | TTL | Value / Doel-IP |
+| :--- | :--- | :--- | :--- |
+| *(leave empty)* | `A` | `600` | `YOUR_SERVER_IP` |
+| `www` | `A` | `600` | `YOUR_SERVER_IP` |
+| `api` | `A` | `600` | `YOUR_SERVER_IP` |
+
 4. Click **Opslaan** (Save).
 
 ---
 
-## Step 3: Installing Coolify on the Server
+## Step 4: Installing Coolify on the Server
 
-### 3.1 Connect to your VPS via SSH
-```bash
-ssh root@YOUR_SERVER_IP
-```
+### 4.1 Run the Installer
+Paste the official Coolify installation script into your server SSH terminal:
 
-### 3.2 Run the Coolify One-Command Installer
 ```bash
 curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
 ```
 
-### 3.3 Initial Coolify Setup
-1. Open `http://YOUR_SERVER_IP:8000` in your web browser.
-2. Create your **Root Administrator Account** (Email & Password).
-3. Select **localhost** as the primary server location.
+### 4.2 Initial Setup
+1. Open `http://YOUR_SERVER_IP:8000` in your browser.
+2. Create your **Root Administrator Account**.
+3. Complete onboarding by selecting **localhost** as the primary server destination.
 
 ---
 
-## Step 4: Configuring Automatic Deployments in Coolify
+## Step 5: Resource Deployment in Coolify
 
-### 4.1 Connect GitHub to Coolify
-1. In Coolify dashboard, go to **Sources** -> **Add Source** -> **GitHub App**.
-2. Follow on-screen prompts to authorize Coolify on your GitHub account.
-3. Grant access to your `angular-node-starter` repository.
+### 5.1 Connect GitHub
+1. In Coolify left menu, click **Sources** -> **+ Add Source** -> **GitHub App**.
+2. Click **Register GitHub App** and authorize access to your `angular-node-starter` repository.
 
-### 4.2 Deploy Database (MySQL)
+### 5.2 Deploy Database (MySQL 8)
 1. Go to **Projects** -> **Default** -> **Production** -> **+ New Resource**.
 2. Select **Database** -> **MySQL**.
-3. Note the generated credentials or set:
-   - **Database Name:** `starter_db`
-   - **Root Password:** `secret`
-4. Click **Deploy**.
-5. Copy the generated **Internal Hostname** (e.g. `mysql` or `mysql-randomhash`) from the MySQL resource page.
+3. Click **Deploy**.
+4. Once running (🟢), copy the internal database hostname from the **MySQL URL (internal)** field (e.g. `xuzkcumlohjyetvhkuynabvy`).
 
-### 4.3 Deploy Backend (Node.js API)
-1. Click **+ New Resource** -> **Private Repository (GitHub)**.
-2. Select `angular-node-starter` repo and `main` branch.
-3. Set **Build Pack**: Dockerfile (pointing to `backend/Dockerfile`).
-4. Set **Environment Variables**:
+### 5.3 Deploy Backend API (Node.js Express)
+1. Click **+ New Resource** -> **GitHub Repository** -> Select `angular-node-starter` (`main` branch).
+2. Set **Build Pack**: `Dockerfile`
+3. Set **Base Directory**: `/backend`
+4. Set **Port**: `3000`
+5. Set **Domains**: `https://api.yourdomain.nl`
+6. Add **Environment Variables** (Type = **Production**):
    - `PORT`: `3000`
-   - `DB_HOST`: Coolify Internal MySQL Hostname (from Step 4.2)
+   - `DB_HOST`: *(copied internal MySQL hostname from step 5.2)*
    - `DB_USER`: `root`
-   - `DB_PASSWORD`: `secret`
-   - `DB_NAME`: `starter_db`
-   - `JWT_SECRET`: Any secure random string (e.g. `super-secret-jwt-key-2026!`)
-5. Set **Domain Name**: `https://api.easetest.nl` (or `http://YOUR_SERVER_IP:3000`).
-6. Click **Deploy**.
+   - `DB_PASSWORD`: *(your root password from MySQL page)*
+   - `DB_NAME`: `default`
+   - `JWT_SECRET`: `super-secret-jwt-key-2026!`
+7. Click **Deploy**.
 
-### 4.4 Deploy Frontend (Angular)
-1. Click **+ New Resource** -> **Private Repository (GitHub)**.
-2. Select `angular-node-starter` repo and `main` branch.
-3. Set **Base Directory**: `/frontend`.
-4. Set **Build Command**: `npm run build`.
-5. Set **Domain Name**: `https://easetest.nl`.
+### 5.4 Deploy Frontend UI (Angular 21 + Tailwind)
+1. Click **+ New Resource** -> **GitHub Repository** -> Select `angular-node-starter` (`main` branch).
+2. Set **Build Pack**: `Dockerfile`
+3. Set **Base Directory**: `/frontend`
+4. Set **Port**: `80`
+5. Set **Domains**: `https://yourdomain.nl, https://www.yourdomain.nl`
 6. Click **Deploy**.
 
 ---
 
-## Step 5: Verify Automatic Git-Push Deployments
+## Step 6: Verify Automatic CI/CD Pipeline
 
-Test your automated CI/CD pipeline:
+Whenever you push changes to GitHub:
 
-1. Make a small code change in your local Angular app.
-2. Commit and push to main:
-   ```bash
-   git add .
-   git commit -m "fix: update landing page header text"
-   git push origin main
-   ```
-3. Coolify will catch the GitHub webhook, build the app, and update your live site with zero downtime!
+```bash
+git add .
+git commit -m "feat: add new feature"
+git push origin main
+```
+
+Coolify automatically catches the webhook, builds the new Docker images, and updates your live website with zero downtime!
