@@ -24,19 +24,62 @@ export class AuthService {
   private router = inject(Router);
 
   // Reactive state signals
+  readonly token = signal<string | null>(this.getInitialToken());
   readonly currentUser = signal<User | null>(this.getInitialUser());
-  readonly token = signal<string | null>(localStorage.getItem('token'));
-  readonly isAuthenticated = computed(() => !!this.token() && !!this.currentUser());
+  readonly isAuthenticated = computed(() => {
+    const token = this.token();
+    const user = this.currentUser();
+    return !!token && !!user && !this.isTokenExpired(token);
+  });
   readonly authLoading = signal<boolean>(false);
 
   constructor() {
-    // Verify session on app initialization if token exists
-    if (this.token() && !this.currentUser()) {
-      this.fetchCurrentUser().subscribe();
+    // If a token exists, verify with server and refresh user state
+    if (this.token()) {
+      if (this.isTokenExpired(this.token())) {
+        this.clearSession(false);
+      } else {
+        this.fetchCurrentUser().subscribe();
+      }
     }
   }
 
+  isTokenExpired(token: string | null = this.token()): boolean {
+    if (!token) return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const payload = JSON.parse(jsonPayload);
+      if (!payload.exp) return false;
+      return payload.exp * 1000 <= Date.now();
+    } catch {
+      return true;
+    }
+  }
+
+  private getInitialToken(): string | null {
+    const token = localStorage.getItem('token');
+    if (this.isTokenExpired(token)) {
+      this.clearStorage();
+      return null;
+    }
+    return token;
+  }
+
   private getInitialUser(): User | null {
+    const token = localStorage.getItem('token');
+    if (this.isTokenExpired(token)) {
+      this.clearStorage();
+      return null;
+    }
     const cached = localStorage.getItem('user');
     return cached ? JSON.parse(cached) : null;
   }
@@ -66,7 +109,7 @@ export class AuthService {
         localStorage.setItem('user', JSON.stringify(user));
       }),
       catchError(() => {
-        this.logout();
+        this.clearSession(true);
         return of(null);
       })
     );
@@ -74,16 +117,22 @@ export class AuthService {
 
   logout(): void {
     this.http.post('/api/auth/logout', {}).subscribe({
-      next: () => this.clearSession(),
-      error: () => this.clearSession(),
+      next: () => this.clearSession(true),
+      error: () => this.clearSession(true),
     });
   }
 
-  private clearSession(): void {
+  clearSession(redirect = true): void {
+    this.clearStorage();
     this.token.set(null);
     this.currentUser.set(null);
+    if (redirect) {
+      this.router.navigate(['/login']);
+    }
+  }
+
+  private clearStorage(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    this.router.navigate(['/login']);
   }
 }
