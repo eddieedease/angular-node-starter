@@ -11,6 +11,7 @@
 > 2. **Express Host Binding (`0.0.0.0`)**: In Node.js Express, `app.listen(PORT, '0.0.0.0')` must explicitly bind to `0.0.0.0`. If bound to default `localhost`, Traefik reverse proxy receives connection refused (`502 Bad Gateway`).
 > 3. **Coolify Internal Database Hostname**: Copy the exact internal container hostname from the **MySQL URL (internal)** field in Coolify (e.g. `mysql://user:pass@CONTAINER_NAME:3306/db`). Do not prepend `mysql-database-` if the internal hostname is just the container UUID.
 > 4. **Frontend Nginx Proxying & DNS Resolver**: In `frontend/nginx.conf`, include `resolver 1.1.1.1 8.8.8.8 valid=30s;` and proxy `/api/` calls to `https://api.yourdomain.nl/api/`. This avoids 405 Method Not Allowed and CORS issues.
+> 5. **Never Expose MySQL Port 3306 to Public Internet**: Keep MySQL Access set to `Private` in Coolify. The Backend API talks to MySQL securely over the internal Docker network `coolify`. Exposing port 3306 publicly triggers abuse/security warnings from hosting providers (Hetzner / CERT-Bund). Always enable UFW (`ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 8000/tcp && ufw enable`).
 
 ---
 
